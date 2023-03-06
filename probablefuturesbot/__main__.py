@@ -17,7 +17,7 @@ from telegram.ext import CallbackQueryHandler
 from telegram.ext import Updater, CallbackContext, CommandHandler, ConversationHandler, MessageHandler, Filters
 
 from probablefutures.probablefutures import ProbableFutures
-from tools import read_config, run_request, read_csv, write_csv
+from probablefuturesbot.tools import read_config, run_request, read_csv, write_csv
 
 logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO)
 logger = logging.getLogger(__name__)
