@@ -251,7 +251,11 @@ def main() -> None:
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start), CommandHandler("probable_future", probable_future)],
         states={
-            START: [CommandHandler("probable_future", probable_future), MessageHandler(~Filters.command, location)],
+            START: [
+                CommandHandler("start", start),
+                CommandHandler("probable_future", probable_future),
+                MessageHandler(~Filters.command, location),
+            ],
             LOCATION: [MessageHandler(~Filters.command, location)],
             WARMING_SCENARIO: [CallbackQueryHandler(warming_scenario)],
             MAP: [CallbackQueryHandler(map)],
