@@ -159,7 +159,7 @@ def map(update: Update, context: CallbackContext) -> int:
         }
 
     try:
-        if "group" in update.message.chat.type:
+        if "group" in query.message.chat.type:
             is_group = True
         else:
             is_group = False
