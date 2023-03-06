@@ -195,16 +195,19 @@ def map(update: Update, context: CallbackContext) -> int:
         try:
             lat = response_json["data"]["getDatasetStatistics"]["datasetStatisticsResponses"][0]["latitude"]
             lon = response_json["data"]["getDatasetStatistics"]["datasetStatisticsResponses"][0]["longitude"]
-            response_location = f"""Location (lat, lon): ({lat}, {lon}):\n"""
+            response_location = f"Location (lat, lon): ({lat}, {lon}):\n"
         except Exception:
-            response_location = f"""Address: {address[chat_id]}:\n"""
+            response_location = f"Address: {address[chat_id]}:\n"
 
         response_message = (
-            response_location,
-            f"5th Percentile: {low_value} {unit}\n",
-            f"Average: {mid_value} {unit}\n",
-            f"95th Percentile: {high_value} {unit}",
+            f"{response_location}"
+            f"5th Percentile: {low_value} {unit}\n"
+            f"Average: {mid_value} {unit}\n"
+            f"95th Percentile: {high_value} {unit}"
         )
+
+        print(response_message)
+
         context.bot.send_message(chat_id, response_message)
     except Exception as e:
         if "Invalid lon param." in str(response_json):
