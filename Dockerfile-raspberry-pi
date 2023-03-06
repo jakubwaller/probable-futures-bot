@@ -6,7 +6,7 @@ RUN python3 -m pip install --upgrade pip
 RUN python3 -m pip install -r requirements.txt
 
 COPY . /probablefuturesbot
-RUN cd /api-libraries/probablefutures-py && python3 -m pip install .
+RUN cd /probablefuturesbot/api-libraries/probablefutures-py && python3 -m pip install .
 RUN cd /probablefuturesbot && python3 -m pip install .
 
 WORKDIR /probablefuturesbot

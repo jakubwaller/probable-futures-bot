@@ -5,34 +5,24 @@ import pandas as pd
 import requests
 
 
-def read_csv(outdir: str, chat_id, df_columns) -> pd.DataFrame:
+def read_csv(outdir: str, csv_name, df_columns) -> pd.DataFrame:
     try:
-        df = pd.read_csv(os.path.join(outdir, f"{chat_id}.csv"))
+        df = pd.read_csv(os.path.join(outdir, f"{csv_name}.csv"))
+        df = df.astype({"timestamp": "datetime64"})
     except Exception:
         df = pd.DataFrame(columns=df_columns)
 
     return df
 
 
-def write_csv(df, outdir: str, chat_id):
-    df.to_csv(os.path.join(outdir, f"{chat_id}.csv"), header=True, index=False)
+def write_csv(df, outdir: str, csv_name):
+    df.to_csv(os.path.join(outdir, f"{csv_name}.csv"), header=True, index=False)
 
 
 def read_config(outdir: str) -> Dict:
     with open(f"{outdir}/env.json") as file:
         config = json.load(file)
     return config
-
-
-def read_currencies(outdir: str) -> Dict:
-    with open(f"{outdir}/currencies.json") as file:
-        currencies = json.load(file)
-    return currencies
-
-
-def save_currencies(currencies: Dict, outdir: str) -> None:
-    with open(f"{outdir}/currencies.json", "w") as outfile:
-        json.dump(currencies, outfile)
 
 
 def run_request(
