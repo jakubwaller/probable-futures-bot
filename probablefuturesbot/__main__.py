@@ -48,7 +48,7 @@ pf.connect()
 response = run_request("GET", "https://probable-futures.github.io/docs/assets/js/search-data.json")
 maps = dict()
 for r in response["19"]["content"].split("| . |")[1:]:
-    maps[int(r.split(" | ")[0].strip())] = r.split(" | ")[1].strip()
+    maps[int(r.split(" | ")[1].strip())] = r.split(" | ")[0].strip()
 
 
 def start(update: Update, context: CallbackContext) -> int:
