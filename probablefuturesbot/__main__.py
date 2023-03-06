@@ -1,7 +1,9 @@
+import datetime
 import html
 import logging
 import traceback
 
+import pandas as pd
 from telegram import (
     InlineKeyboardButton,
     InlineKeyboardMarkup,
@@ -15,14 +17,20 @@ from telegram.ext import CallbackQueryHandler
 from telegram.ext import Updater, CallbackContext, CommandHandler, ConversationHandler, MessageHandler, Filters
 
 from probablefutures.probablefutures import ProbableFutures
-from tools import read_config, run_request
+from tools import read_config, run_request, read_csv, write_csv
 
 logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 outdir = "logs"
+logs_name = "logs"
 
 config = read_config(outdir)
+
+df_columns = ["group", "timestamp", "lat", "lon", "address", "warming_scenario", "map_id", "hashed_user"]
+
+df = read_csv(outdir, logs_name, df_columns)
+
 developer_chat_id = config["developer_chat_id"]
 bot_token = config["bot_token"]
 pf_user = config["username"]
@@ -48,8 +56,9 @@ def start(update: Update, context: CallbackContext) -> int:
         update.message.chat.id,
         "Hi there! I’m Probable Futures Bot.\n"
         "Send me a location and I'll send you back some info from https://probablefutures.org/.\n"
+        "For logging purposes, the input information (location, warming scenario and map type) is saved, "
+        "but can not be traced to a user, as the chat_id is hashed (anonymised).\n"
         "If you find issues or have any questions, please contact probablefuturesbot@jakubwaller.eu\n"
-        "If you want to support the bot, you can buy him a coffee here https://ko-fi.com/jakubwaller\n"
         "Feel free to also check out the code at: https://github.com/jakubwaller/probable-futures-bot",
     )
 
@@ -73,6 +82,7 @@ def probable_future(update: Update, context: CallbackContext) -> int:
 def location(update: Update, context: CallbackContext) -> int:
     chat_id = update.message.chat.id
     location_info[chat_id] = None
+    address[chat_id] = None
 
     if update.message.location:
         latitude = update.message.location.latitude
@@ -143,6 +153,31 @@ def map(update: Update, context: CallbackContext) -> int:
             "warmingScenario": selected_warming_scenario[chat_id],
             "datasetId": selected_map_id,
         }
+
+    try:
+        if "group" in update.message.chat.type:
+            is_group = True
+        else:
+            is_group = False
+    except Exception as e:
+        logger.error(e)
+        is_group = False
+
+    global df
+    log_entry = [
+        is_group,
+        datetime.datetime.now(),
+        location_info[chat_id][0],
+        location_info[chat_id][1],
+        address[chat_id],
+        selected_warming_scenario[chat_id],
+        selected_map_id,
+        hash(chat_id),
+    ]
+    context.bot.send_message(developer_chat_id, str(log_entry))
+    df = pd.concat([df, pd.DataFrame([log_entry], columns=df_columns)])
+    write_csv(df, outdir, logs_name)
+
     output_fields = ["highValue", "lowValue", "midValue", "unit", "warmingScenario", "latitude", "longitude"]
     response = pf.request(input_fields=input_fields, output_fields=output_fields)
     response_json = response.json()
