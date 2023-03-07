@@ -1,2 +1,3 @@
 [submodule "api-libraries"]
 	url = git@github.com:jakubwaller/api-libraries.git
+	path = api-libraries
