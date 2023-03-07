@@ -1,3 +1,2 @@
-[submodule "probablefuturesbot/api-libraries"]
-	path = api-libraries
+[submodule "api-libraries"]
 	url = git@github.com:jakubwaller/api-libraries.git
