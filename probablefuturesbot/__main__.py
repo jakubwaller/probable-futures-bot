@@ -144,11 +144,11 @@ def map(update: Update, context: CallbackContext) -> int:
     query.edit_message_text(text=f"Selected map: {maps[selected_map_id]}")
 
     if location_info[chat_id]:
-        lat = str(location_info[chat_id][0])
-        lon = str(location_info[chat_id][1])
+        lat = float(location_info[chat_id][0])
+        lon = float(location_info[chat_id][1])
         input_fields = {
-            "lon": lon,
-            "lat": lat,
+            "longitude": lon,
+            "latitude": lat,
             "warmingScenario": selected_warming_scenario[chat_id],
             "datasetId": selected_map_id,
         }
