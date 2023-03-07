@@ -92,7 +92,8 @@ def location(update: Update, context: CallbackContext) -> int:
         address[chat_id] = update.message.text.strip()
 
     keyboard = [
-        InlineKeyboardButton(d, callback_data=d) for d in ["+0.5°C", "+1.0°C", "+1.5°C", "+2.0°C", "+2.5°C", "+3.0°C"]
+        InlineKeyboardButton(d, callback_data=d.replace("+", "").replace("°C"))
+        for d in ["+0.5°C", "+1.0°C", "+1.5°C", "+2.0°C", "+2.5°C", "+3.0°C"]
     ]
 
     chunk_size = 3
