@@ -130,7 +130,7 @@ def warming_scenario(update: Update, context: CallbackContext) -> int:
     return MAP
 
 
-def map(update: Update, context: CallbackContext) -> int:
+def map_type(update: Update, context: CallbackContext) -> int:
     query = update.callback_query
     chat_id = query.message.chat.id
     context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
@@ -260,7 +260,7 @@ def main() -> None:
             ],
             LOCATION: [MessageHandler(~Filters.command, location)],
             WARMING_SCENARIO: [CallbackQueryHandler(warming_scenario)],
-            MAP: [CallbackQueryHandler(map)],
+            MAP: [CallbackQueryHandler(map_type)],
         },
         fallbacks=[CommandHandler("cancel", cancel)],
     )
