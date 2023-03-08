@@ -209,8 +209,6 @@ def map(update: Update, context: CallbackContext) -> int:
             f"95th Percentile: {high_value} {unit}"
         )
 
-        print(response_message)
-
         context.bot.send_message(chat_id, response_message)
     except Exception as e:
         if "Invalid lon param." in str(response_json):
@@ -219,6 +217,7 @@ def map(update: Update, context: CallbackContext) -> int:
         else:
             response_message = response_json
             context.bot.send_message(chat_id, response_message)
+            context.bot.send_message(developer_chat_id, response_message)
             raise e
 
     return START
