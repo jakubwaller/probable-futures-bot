@@ -202,12 +202,15 @@ def map_type(update: Update, context: CallbackContext) -> int:
         except Exception:
             response_location = f"Address: {address[chat_id]}:\n"
 
-        response_message = (
-            f"{response_location}"
-            f"5th Percentile: {low_value} {unit}\n"
-            f"Average: {mid_value} {unit}\n"
-            f"95th Percentile: {high_value} {unit}"
-        )
+        response_message = f"{response_location}"
+
+        if low_value:
+            response_message = response_message + f"5th Percentile: {low_value} {unit}\n"
+
+        response_message = response_message + f"Average: {mid_value} {unit}\n"
+
+        if high_value:
+            response_message = response_message + f"95th Percentile: {high_value} {unit}"
 
         context.bot.send_message(chat_id, response_message)
     except Exception as e:
