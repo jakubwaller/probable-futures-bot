@@ -272,7 +272,7 @@ def main() -> None:
             START: [
                 CommandHandler("start", start),
                 CommandHandler("probable_future", probable_future),
-                MessageHandler(~Filters.command, location),
+                MessageHandler(~Filters.command & Filters.chat_type.private, location),
             ],
             LOCATION: [MessageHandler(~Filters.command, location)],
             WARMING_SCENARIO: [CallbackQueryHandler(warming_scenario)],
