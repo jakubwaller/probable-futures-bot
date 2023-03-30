@@ -66,15 +66,28 @@ def start(update: Update, context: CallbackContext) -> int:
 
 
 def probable_future(update: Update, context: CallbackContext) -> int:
+    try:
+        if "group" in update.message.chat.type:
+            is_group = True
+        else:
+            is_group = False
+    except Exception as e:
+        logger.error(e)
+        is_group = False
+
     chat_id = update.message.chat.id
-    location_keyboard = KeyboardButton(text="send_location", request_location=True)
-    custom_keyboard = [[location_keyboard]]
-    reply_markup = ReplyKeyboardMarkup(custom_keyboard)
-    context.bot.send_message(
-        chat_id=chat_id,
-        text="You can either share your location or send any address you like.",
-        reply_markup=reply_markup,
-    )
+
+    if not is_group:
+        location_keyboard = KeyboardButton(text="send_location", request_location=True)
+        custom_keyboard = [[location_keyboard]]
+        reply_markup = ReplyKeyboardMarkup(custom_keyboard)
+        context.bot.send_message(
+            chat_id=chat_id,
+            text="You can either share your location or send any address you like.",
+            reply_markup=reply_markup,
+        )
+    else:
+        context.bot.send_message(chat_id, "Send an address.")
 
     return LOCATION
 
