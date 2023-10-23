@@ -193,7 +193,7 @@ def map_type(update: Update, context: CallbackContext) -> int:
         address[chat_id],
         selected_warming_scenario[chat_id],
         selected_map_id,
-        hash(chat_id),
+        hash(str(chat_id)),
     ]
     context.bot.send_message(developer_chat_id, str(log_entry))
     df = pd.concat([df, pd.DataFrame([log_entry], columns=df_columns)])
