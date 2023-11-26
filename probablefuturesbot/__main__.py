@@ -1,14 +1,12 @@
 import datetime
-import html
 import logging
-import traceback
 
 import pandas as pd
+from probablefutures.probablefutures import ProbableFutures
 from telegram import (
     InlineKeyboardButton,
     InlineKeyboardMarkup,
     Update,
-    ParseMode,
     KeyboardButton,
     ReplyKeyboardMarkup,
     ChatAction,
@@ -16,7 +14,6 @@ from telegram import (
 from telegram.ext import CallbackQueryHandler
 from telegram.ext import Updater, CallbackContext, CommandHandler, ConversationHandler, MessageHandler, Filters
 
-from probablefutures.probablefutures import ProbableFutures
 from probablefuturesbot.tools import read_config, run_request, read_csv, write_csv
 
 logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO)
@@ -252,14 +249,7 @@ def error_handler(update: object, context: CallbackContext):
     """Log the error and send a telegram message to notify the developer."""
     logger.error(msg="Exception while handling an update:", exc_info=context.error)
 
-    tb_list = traceback.format_exception(None, context.error, context.error.__traceback__)
-    tb_string = "".join(tb_list)
-
-    message = f"An exception was raised while handling an update\n" f"<pre>{html.escape(tb_string)}"
-
-    message = message[:1000] + "</pre>"
-
-    context.bot.send_message(chat_id=developer_chat_id, text=message, parse_mode=ParseMode.HTML)
+    context.bot.send_message(chat_id=developer_chat_id, text=str(context.error))
 
 
 def main() -> None:
