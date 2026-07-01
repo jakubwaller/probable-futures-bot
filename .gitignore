@@ -2,3 +2,5 @@ venv_probablefuturesbot
 env.json
 .idea
 *.csv
+__pycache__/
+*.pyc
