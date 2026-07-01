@@ -42,10 +42,16 @@ selected_warming_scenario = dict()
 pf = ProbableFutures(user=pf_user, password=pf_password)
 pf.connect()
 
-response = run_request("GET", "https://probable-futures.github.io/docs/assets/js/search-data.json")
+response = run_request("GET", "https://docs.probablefutures.org/assets/js/search-data.json")
 maps = dict()
-for r in response["28"]["content"].split("| . |")[1:]:
-    maps[int(r.split(" | ")[1].strip())] = r.split(" | ")[0].strip()
+for section in response.values():
+    if section.get("title") == "Maps inventory":
+        for r in section["content"].split("| . |")[1:]:
+            fields = r.split(" | ")
+            try:
+                maps[int(fields[1].strip())] = fields[0].strip()
+            except (IndexError, ValueError):
+                continue
 logger.info(maps)
 
 
