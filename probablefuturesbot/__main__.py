@@ -2,7 +2,7 @@ import datetime
 import logging
 
 import pandas as pd
-from probablefutures.probablefutures import ProbableFutures
+from probablefuturesbot.probable_futures import ProbableFutures
 from telegram import (
     InlineKeyboardButton,
     InlineKeyboardMarkup,
@@ -30,8 +30,11 @@ df = read_csv(outdir, logs_name, df_columns)
 
 developer_chat_id = config["developer_chat_id"]
 bot_token = config["bot_token"]
-pf_user = config["username"]
-pf_password = config["password"]
+# Probable Futures now authenticates with API client credentials (client id /
+# client secret). Fall back to the historical username/password keys so existing
+# configs keep working once those values hold the new credentials.
+pf_client_id = config.get("client_id", config.get("username"))
+pf_client_secret = config.get("client_secret", config.get("password"))
 
 (START, LOCATION, WARMING_SCENARIO, MAP) = range(4)
 
@@ -39,7 +42,7 @@ location_info = dict()
 address = dict()
 selected_warming_scenario = dict()
 
-pf = ProbableFutures(user=pf_user, password=pf_password)
+pf = ProbableFutures(client_id=pf_client_id, client_secret=pf_client_secret)
 pf.connect()
 
 response = run_request("GET", "https://docs.probablefutures.org/assets/js/search-data.json")
