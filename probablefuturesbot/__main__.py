@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 import logging
 
@@ -9,14 +10,16 @@ from telegram import (
     Update,
     KeyboardButton,
     ReplyKeyboardMarkup,
-    ChatAction,
 )
+from telegram.constants import ChatAction
 from telegram.ext import CallbackQueryHandler
-from telegram.ext import Updater, CallbackContext, CommandHandler, ConversationHandler, MessageHandler, Filters
+from telegram.ext import Application, ContextTypes, CommandHandler, ConversationHandler, MessageHandler, filters
 
 from probablefuturesbot.tools import read_config, run_request, read_csv, write_csv
 
 logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO)
+# httpx logs full request URLs at INFO, which would put the bot token in the logs
+logging.getLogger("httpx").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
 outdir = "logs"
@@ -58,8 +61,8 @@ for section in response.values():
 logger.info(maps)
 
 
-def start(update: Update, context: CallbackContext) -> int:
-    context.bot.send_message(
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    await context.bot.send_message(
         update.message.chat.id,
         "Hi there! I’m Probable Futures Bot.\n"
         "Send me a location and I'll send you back some info from https://probablefutures.org/.\n"
@@ -72,7 +75,7 @@ def start(update: Update, context: CallbackContext) -> int:
     return START
 
 
-def probable_future(update: Update, context: CallbackContext) -> int:
+async def probable_future(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     try:
         if "group" in update.message.chat.type:
             is_group = True
@@ -88,18 +91,18 @@ def probable_future(update: Update, context: CallbackContext) -> int:
         location_keyboard = KeyboardButton(text="send_location", request_location=True)
         custom_keyboard = [[location_keyboard]]
         reply_markup = ReplyKeyboardMarkup(custom_keyboard)
-        context.bot.send_message(
+        await context.bot.send_message(
             chat_id=chat_id,
             text="You can either share your location or send any address you like.",
             reply_markup=reply_markup,
         )
     else:
-        context.bot.send_message(chat_id, "Send an address.")
+        await context.bot.send_message(chat_id, "Send an address.")
 
     return LOCATION
 
 
-def location(update: Update, context: CallbackContext) -> int:
+async def location(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     chat_id = update.message.chat.id
     location_info[chat_id] = None
     address[chat_id] = None
@@ -121,22 +124,22 @@ def location(update: Update, context: CallbackContext) -> int:
 
     reply_markup = InlineKeyboardMarkup(chunks)
 
-    context.bot.send_message(chat_id, "Select a warming scenario.", reply_markup=reply_markup)
+    await context.bot.send_message(chat_id, "Select a warming scenario.", reply_markup=reply_markup)
 
     return WARMING_SCENARIO
 
 
-def warming_scenario(update: Update, context: CallbackContext) -> int:
+async def warming_scenario(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     chat_id = query.message.chat.id
 
     # CallbackQueries need to be answered, even if no notification to the user is needed
     # Some clients may have trouble otherwise. See https://core.telegram.org/bots/api#callbackquery
-    query.answer()
+    await query.answer()
 
     selected_warming_scenario[chat_id] = query.data
 
-    query.edit_message_text(text=f"Selected warming scenario: {query.data}")
+    await query.edit_message_text(text=f"Selected warming scenario: {query.data}")
 
     keyboard = [InlineKeyboardButton(name, callback_data=map_id) for map_id, name in maps.items()]
 
@@ -145,23 +148,23 @@ def warming_scenario(update: Update, context: CallbackContext) -> int:
 
     reply_markup = InlineKeyboardMarkup(chunks)
 
-    context.bot.send_message(chat_id, "Select a map.", reply_markup=reply_markup)
+    await context.bot.send_message(chat_id, "Select a map.", reply_markup=reply_markup)
 
     return MAP
 
 
-def map_type(update: Update, context: CallbackContext) -> int:
+async def map_type(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     chat_id = query.message.chat.id
-    context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
+    await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
 
     # CallbackQueries need to be answered, even if no notification to the user is needed
     # Some clients may have trouble otherwise. See https://core.telegram.org/bots/api#callbackquery
-    query.answer()
+    await query.answer()
 
     selected_map_id = int(query.data)
 
-    query.edit_message_text(text=f"Selected map: {maps[selected_map_id]}")
+    await query.edit_message_text(text=f"Selected map: {maps[selected_map_id]}")
 
     if location_info[chat_id]:
         lat = float(location_info[chat_id][0])
@@ -201,12 +204,12 @@ def map_type(update: Update, context: CallbackContext) -> int:
         selected_map_id,
         hash(str(chat_id)),
     ]
-    context.bot.send_message(developer_chat_id, str(log_entry))
+    await context.bot.send_message(developer_chat_id, str(log_entry))
     df = pd.concat([df, pd.DataFrame([log_entry], columns=df_columns)])
     write_csv(df, outdir, logs_name)
 
     output_fields = ["highValue", "lowValue", "midValue", "unit", "warmingScenario", "latitude", "longitude"]
-    response = pf.request(input_fields=input_fields, output_fields=output_fields)
+    response = await asyncio.to_thread(pf.request, input_fields=input_fields, output_fields=output_fields)
     response_json = response.json()
 
     try:
@@ -232,39 +235,38 @@ def map_type(update: Update, context: CallbackContext) -> int:
         if high_value:
             response_message = response_message + f"95th Percentile: {high_value} {unit}"
 
-        context.bot.send_message(chat_id, response_message)
+        await context.bot.send_message(chat_id, response_message)
     except Exception as e:
         if "Invalid lon param." in str(response_json):
             response_message = "Invalid address/location!"
-            context.bot.send_message(chat_id, response_message)
+            await context.bot.send_message(chat_id, response_message)
         else:
             response_message = response_json
-            context.bot.send_message(chat_id, response_message)
-            context.bot.send_message(developer_chat_id, response_message)
+            await context.bot.send_message(chat_id, response_message)
+            await context.bot.send_message(developer_chat_id, response_message)
             raise e
 
     return START
 
 
-def cancel(update: Update, context: CallbackContext) -> int:
+async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Cancels the current operation."""
 
-    context.bot.send_message(update.message.chat.id, "Current operation cancelled.")
+    await context.bot.send_message(update.message.chat.id, "Current operation cancelled.")
 
     return START
 
 
-def error_handler(update: object, context: CallbackContext):
+async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE):
     """Log the error and send a telegram message to notify the developer."""
     logger.error(msg="Exception while handling an update:", exc_info=context.error)
 
-    context.bot.send_message(chat_id=developer_chat_id, text=str(context.error))
+    await context.bot.send_message(chat_id=developer_chat_id, text=str(context.error))
 
 
 def main() -> None:
     """Setup and run the bot."""
-    # Create the Updater and pass it your bot's token.
-    updater = Updater(bot_token)
+    application = Application.builder().token(bot_token).build()
 
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start), CommandHandler("probable_future", probable_future)],
@@ -272,25 +274,21 @@ def main() -> None:
             START: [
                 CommandHandler("start", start),
                 CommandHandler("probable_future", probable_future),
-                MessageHandler(~Filters.command & Filters.chat_type.private, location),
+                MessageHandler(~filters.COMMAND & filters.ChatType.PRIVATE, location),
             ],
-            LOCATION: [MessageHandler(~Filters.command, location)],
+            LOCATION: [MessageHandler(~filters.COMMAND, location)],
             WARMING_SCENARIO: [CallbackQueryHandler(warming_scenario)],
             MAP: [CallbackQueryHandler(map_type)],
         },
         fallbacks=[CommandHandler("cancel", cancel)],
     )
 
-    updater.dispatcher.add_handler(conv_handler)
+    application.add_handler(conv_handler)
 
-    updater.dispatcher.add_error_handler(error_handler)
+    application.add_error_handler(error_handler)
 
-    # Start the Bot
-    updater.start_polling()
-
-    # Run the bot until the user presses Ctrl-C or the process receives SIGINT,
-    # SIGTERM or SIGABRT
-    updater.idle()
+    # Runs until the process receives SIGINT, SIGTERM or SIGABRT.
+    application.run_polling()
 
 
 if __name__ == "__main__":
