@@ -18,6 +18,8 @@ from telegram.ext import Application, ContextTypes, CommandHandler, Conversation
 from probablefuturesbot.tools import read_config, run_request, read_csv, write_csv
 
 logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO)
+# httpx logs full request URLs at INFO, which would put the bot token in the logs
+logging.getLogger("httpx").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
 outdir = "logs"
