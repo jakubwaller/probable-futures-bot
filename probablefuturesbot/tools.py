@@ -8,7 +8,6 @@ import requests
 def read_csv(outdir: str, csv_name, df_columns) -> pd.DataFrame:
     try:
         df = pd.read_csv(os.path.join(outdir, f"{csv_name}.csv"))
-        df = df.astype({"timestamp": "datetime64"})
     except Exception:
         df = pd.DataFrame(columns=df_columns)
 
