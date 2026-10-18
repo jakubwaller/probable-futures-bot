@@ -241,7 +241,8 @@ async def map_type(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
             response_message = "Invalid address/location!"
             await context.bot.send_message(chat_id, response_message)
         else:
-            response_message = response_json
+            # Telegram takes text only, up to 4096 characters
+            response_message = str(response_json)[:4000]
             await context.bot.send_message(chat_id, response_message)
             await context.bot.send_message(developer_chat_id, response_message)
             raise e
@@ -261,7 +262,8 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE):
     """Log the error and send a telegram message to notify the developer."""
     logger.error(msg="Exception while handling an update:", exc_info=context.error)
 
-    await context.bot.send_message(chat_id=developer_chat_id, text=str(context.error))
+    # An empty or over-long text would make Telegram reject the alert itself
+    await context.bot.send_message(chat_id=developer_chat_id, text=(str(context.error) or repr(context.error))[:4000])
 
 
 def main() -> None:
