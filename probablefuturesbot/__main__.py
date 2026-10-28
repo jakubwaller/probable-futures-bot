@@ -39,7 +39,7 @@ bot_token = config["bot_token"]
 pf_client_id = config.get("client_id", config.get("username"))
 pf_client_secret = config.get("client_secret", config.get("password"))
 
-(START, LOCATION, WARMING_SCENARIO, MAP) = range(4)
+START, LOCATION, WARMING_SCENARIO, MAP = range(4)
 
 location_info = dict()
 address = dict()
