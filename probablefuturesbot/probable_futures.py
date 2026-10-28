@@ -36,9 +36,7 @@ class ProbableFutures:
         self._access_token = None
 
     def connect(self) -> None:
-        encoded_credentials = base64.b64encode(
-            (self.client_id + ":" + self.client_secret).encode()
-        ).decode()
+        encoded_credentials = base64.b64encode((self.client_id + ":" + self.client_secret).encode()).decode()
         response = requests.get(
             self.auth_url,
             headers={"Authorization": "Basic " + encoded_credentials},
